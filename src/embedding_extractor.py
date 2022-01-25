@@ -1,6 +1,17 @@
 import os
 from IPython.display import clear_output
 import torch
+from pyannote.audio.utils.signal import Binarize, Peak
+from pyannote.core import Segment, notebook, SlidingWindowFeature, timeline, Timeline
+
+# speech activity detection model trained on AMI training set
+sad = torch.hub.load('pyannote/pyannote-audio', 'sad_ami')
+# speaker change detection model trained on AMI training set
+scd = torch.hub.load('pyannote/pyannote-audio', 'scd_ami')
+# speaker embedding model trained on AMI training set
+#emb = torch.hub.load('pyannote/pyannote-audio', 'emb_ami')
+#emb = torch.hub.load('pyannote/pyannote-audio', 'emb')
+emb = torch.hub.load('pyannote/pyannote-audio', 'emb_voxceleb')
 
 def pyannote_run_directory(directory, sid_creator, save_dir, save_name, save=False):
 
@@ -34,14 +45,7 @@ def pyannote_run_directory(directory, sid_creator, save_dir, save_name, save=Fal
 
 
 def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator):
-    # speech activity detection model trained on AMI training set
-    sad = torch.hub.load('pyannote/pyannote-audio', 'sad_ami')
-    # speaker change detection model trained on AMI training set
-    scd = torch.hub.load('pyannote/pyannote-audio', 'scd_ami')
-    # speaker embedding model trained on AMI training set
-    #emb = torch.hub.load('pyannote/pyannote-audio', 'emb_ami')
-    #emb = torch.hub.load('pyannote/pyannote-audio', 'emb')
-    emb = torch.hub.load('pyannote/pyannote-audio', 'emb_voxceleb')
+    
     
     # obtain raw embeddings (as `pyannote.core.SlidingWindowFeature` instance)
     embeddings = emb(one_file)
@@ -68,7 +72,7 @@ def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator):
     for segment in long_turns:
         inter = embeddings.crop(segment, 'strict')
         all_embs.append(inter)
-        sid_per_sample,stim_type = sid_creator
+        sid_per_sample,stim_type = sid_creator(inter,sid_per_sample, stim_type)
     
     return all_embs, id_per_sample, stim_type, test_inter
         
