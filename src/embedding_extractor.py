@@ -1,4 +1,48 @@
-def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator)
+import os
+from IPython.display import clear_output
+import torch
+
+def pyannote_run_directory(directory, sid_creator, save_dir, save_name, save=False):
+
+    #extracts embeddings from wav files in a folder
+    #does speaker activity and change detection for long sentences, but just embedding extraction for concatenated hellos    
+    all_embs, sid_per_sample, stim_type = [], [], []
+
+    print("Started")
+    for filename in os.listdir(directory):
+        if filename.endswith(".wav"): 
+            clear_output(wait=True)
+            
+            print("Processing" + str(filename))
+            
+            one_file = {'uri': 'filename', 'audio': os.path.join(directory, filename)}
+            
+            all_embs,sid_per_sample,stim_type,test_inter = pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator)
+
+            
+
+    all_embs = pd.DataFrame(np.vstack(all_embs))
+    all_embs['part'] = sid_per_sample
+    all_embs['stim_type'] = stim_type
+    print("Done")
+    
+    if save:
+        all_embs.to_csv(os.path.join(save_dir, save_name))
+
+    return all_embs,sid_per_sample,stim_type,test_inter
+
+
+
+def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator):
+    # speech activity detection model trained on AMI training set
+    sad = torch.hub.load('pyannote/pyannote-audio', 'sad_ami')
+    # speaker change detection model trained on AMI training set
+    scd = torch.hub.load('pyannote/pyannote-audio', 'scd_ami')
+    # speaker embedding model trained on AMI training set
+    #emb = torch.hub.load('pyannote/pyannote-audio', 'emb_ami')
+    #emb = torch.hub.load('pyannote/pyannote-audio', 'emb')
+    emb = torch.hub.load('pyannote/pyannote-audio', 'emb_voxceleb')
+    
     # obtain raw embeddings (as `pyannote.core.SlidingWindowFeature` instance)
     embeddings = emb(one_file)
 
@@ -24,53 +68,32 @@ def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator)
     for segment in long_turns:
         inter = embeddings.crop(segment, 'strict')
         all_embs.append(inter)
-        sid_per_sample,sno = sid_creator
+        sid_per_sample,stim_type = sid_creator
     
-    return all_embs, sid_per_sample,sno
+    return all_embs, id_per_sample, stim_type, test_inter
         
-def readings_sid_creator(inter,sid_per_sample, sno):
+
+    
+    
+    
+def readings_sid_creator(inter,sid_per_sample, stim_type):
     for i in range(0, inter.shape[0]):
         sid_per_sample.append(filename[0:2])
-    return sid_per_sample,sno
+    return sid_per_sample,stim_type
 
-def VFPpara_sid_creator(inter,sid_per_sample,sno):
+
+
+
+def VFPpara_sid_creator(inter,sid_per_sample,stim_type):
     for i in range(0, inter.shape[0]):
         p = filename[filename.index('_')-2:filename.index('_')]
         vtype = filename[filename.index('_')+1]
         idn = os.path.splitext(filename)[0][-1]
         if idn=='h':
             idn=''
-        sno.append(vtype+idn)
+        stim_type.append(vtype+idn)
         if 'Norm' in filename:
             sid_per_sample.append(p + 'n')
         else:
             sid_per_sample.append(p + 'v')
-    return sid_per_sample,sno
-
-
-def pyannote_run_directory(directory, samptype, save_dir, save_name, save=False):
-
-    #extracts embeddings from wav files in a folder
-    #does speaker activity and change detection for long sentences, but just embedding extraction for concatenated hellos
-
-    all_embs, sid_per_sample, sno = [], [], []
-
-    print("Started")
-    for filename in os.listdir(directory):
-        if filename.endswith(".wav"): 
-            clear_output(wait=True)
-            one_file = {'uri': 'filename', 'audio': os.path.join(directory, filename)}
-
-            all_embs,sid_per_sample = pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator)
-
-            print("Processing" + str(filename))
-
-    all_embs = pd.DataFrame(np.vstack(all_embs))
-    all_embs['part'] = sid_per_sample
-    all_embs['sno'] = sno
-    print("Done")
-    
-    if save:
-        all_embs.to_csv(os.path.join(save_dir, save_name))
-
-    return all_embs
+    return sid_per_sample,stim_type
