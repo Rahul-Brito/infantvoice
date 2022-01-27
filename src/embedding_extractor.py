@@ -1,4 +1,6 @@
 import os
+import numpy as np
+import pandas as pd
 from IPython.display import clear_output
 import torch
 from pyannote.audio.utils.signal import Binarize, Peak
@@ -13,39 +15,48 @@ scd = torch.hub.load('pyannote/pyannote-audio', 'scd_ami')
 #emb = torch.hub.load('pyannote/pyannote-audio', 'emb')
 emb = torch.hub.load('pyannote/pyannote-audio', 'emb_voxceleb')
 
-def pyannote_run_directory(directory, sid_creator, save_dir, save_name, save=False):
+def pyannote_run_directory(directory, save_dir, save_name, save=False):
 
-    #extracts embeddings from wav files in a folder
-    #does speaker activity and change detection for long sentences, but just embedding extraction for concatenated hellos    
-    all_embs, sid_per_sample, stim_type = [], [], []
+    #extracts embeddings from .wav files in a folder
+    #does speaker activity and change detection for long sentences, but just embedding extraction for concatenated hellos
+    #using pyannote audio using tutorial: https://github.com/pyannote/pyannote-audio/tree/master/tutorials/pretrained/model
+    
+    #all_embs, = [], [], []
 
-    print("Started")
+    print("Started")#to keep track of progress when running multiple participants
+    
+    #finds all .wav files in target directory, will extract embeddings from each
     for filename in os.listdir(directory):
         if filename.endswith(".wav"): 
-            clear_output(wait=True)
             
+            #clears output then prints only current sample being operated on
+            clear_output(wait=True)
             print("Processing" + str(filename))
             
+            #uri format required for pyannote audtio
             one_file = {'uri': 'filename', 'audio': os.path.join(directory, filename)}
             
-            all_embs,sid_per_sample,stim_type,test_inter = pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator)
+            #extract embeddings from one wav file
+            #note that this is modifying from pyannote example
+            emb_from_sample = pyannote_extract_embs(one_file)
 
-            
-
-    all_embs = pd.DataFrame(np.vstack(all_embs))
-    all_embs['part'] = sid_per_sample
-    all_embs['stim_type'] = stim_type
+            all_embs = pd.DataFrame(np.vstack(emb_from_sample))
+            all_embs['part'] = [filename[0:2]]*all_embs.shape[0]
+            #all_embs['stim_type'] = stim_type
+    
     print("Done")
     
     if save:
         all_embs.to_csv(os.path.join(save_dir, save_name))
 
-    return all_embs,sid_per_sample,stim_type,test_inter
+    return all_embs
 
 
 
-def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator):
+
+def pyannote_extract_embs(one_file):
     
+    emb_from_sample = []
     
     # obtain raw embeddings (as `pyannote.core.SlidingWindowFeature` instance)
     embeddings = emb(one_file)
@@ -71,33 +82,53 @@ def pyannote_extract_embs(one_file, all_embs, sid_per_sample, sid_creator):
 
     for segment in long_turns:
         inter = embeddings.crop(segment, 'strict')
-        all_embs.append(inter)
-        sid_per_sample,stim_type = sid_creator(inter,sid_per_sample, stim_type)
+        emb_from_sample.append(inter)
+        #sid_per_sample,stim_type = sid_creator(inter,filename)
     
-    return all_embs, id_per_sample, stim_type, test_inter
+    return emb_from_sample #, sid_per_sample, stim_type
         
 
     
     
     
-def readings_sid_creator(inter,sid_per_sample, stim_type):
+def readings_sid_creator(inter, filename):
+    
+    sid_per_sample, stim_type = [],[]
+    
     for i in range(0, inter.shape[0]):
         sid_per_sample.append(filename[0:2])
+        stim_type.append(0)
     return sid_per_sample,stim_type
 
 
 
 
-def VFPpara_sid_creator(inter,sid_per_sample,stim_type):
-    for i in range(0, inter.shape[0]):
-        p = filename[filename.index('_')-2:filename.index('_')]
-        vtype = filename[filename.index('_')+1]
-        idn = os.path.splitext(filename)[0][-1]
-        if idn=='h':
-            idn=''
-        stim_type.append(vtype+idn)
-        if 'Norm' in filename:
-            sid_per_sample.append(p + 'n')
-        else:
-            sid_per_sample.append(p + 'v')
-    return sid_per_sample,stim_type
+#def VFPpara_sid_creator(filename):
+    
+    #p = filename[filename.index('_')-2:filename.index('_')]
+    #vtype = filename[filename.index('_')+1]
+    #idn = os.path.splitext(filename)[0][-1]
+    #if idn=='h':
+    #    idn=''
+    #stim_type.append(vtype+idn)
+    
+    #if 'Norm' in filename:
+    #    sid_per_sample.append(p + 'n')
+    #else:
+    #    sid_per_sample.append(p + 'v')
+    #
+    
+    #sid_per_sample, stim_type = [],[]
+    
+    #for i in range(0, inter.shape[0]):
+    #    p = filename[filename.index('_')-2:filename.index('_')]
+    #    vtype = filename[filename.index('_')+1]
+    #    idn = os.path.splitext(filename)[0][-1]
+    #    if idn=='h':
+    #        idn=''
+    #    stim_type.append(vtype+idn)
+    #    if 'Norm' in filename:
+    #        sid_per_sample.append(p + 'n')
+    #    else:
+    #        sid_per_sample.append(p + 'v')
+    #return sid_per_sample,stim_type
