@@ -83,24 +83,8 @@ def pyannote_extract_embs(one_file):
     for segment in long_turns:
         inter = embeddings.crop(segment, 'strict')
         emb_from_sample.append(inter)
-        #sid_per_sample,stim_type = sid_creator(inter,filename)
     
-    return emb_from_sample #, sid_per_sample, stim_type
-        
-
-    
-    
-    
-def readings_sid_creator(inter, filename):
-    
-    sid_per_sample, stim_type = [],[]
-    
-    for i in range(0, inter.shape[0]):
-        sid_per_sample.append(filename[0:2])
-        stim_type.append(0)
-    return sid_per_sample,stim_type
-
-
+    return emb_from_sample
 
 
 #def VFPpara_sid_creator(filename):
