@@ -26,6 +26,9 @@ def pyannote_run_directory(directory, save_dir, save_name, save=False):
     print("Started")#to keep track of progress when running multiple participants
     
     #finds all .wav files in target directory, will extract embeddings from each
+    all_embs = []
+    part_id = []
+    
     for filename in os.listdir(directory):
         if filename.endswith(".wav"): 
             
@@ -39,17 +42,20 @@ def pyannote_run_directory(directory, save_dir, save_name, save=False):
             #extract embeddings from one wav file
             #note that this is modifying from pyannote example
             emb_from_sample = pyannote_extract_embs(one_file)
+            
+            part_id.append([filename[0:2]]*emb_from_sample.shape[0])
+            all_embs.append(emb_from_sample)
 
-            all_embs = pd.DataFrame(np.vstack(emb_from_sample))
-            all_embs['part'] = [filename[0:2]]*all_embs.shape[0]
-            #all_embs['stim_type'] = stim_type
+    #all_embs = pd.DataFrame(all_embs.vstac)
+    #all_embs['part'] = [filename[0:2]]*all_embs.shape[0]
+    #all_embs['stim_type'] = stim_type
     
     print("Done")
     
     if save:
         all_embs.to_csv(os.path.join(save_dir, save_name))
 
-    return all_embs
+    return all_embs, emb_from_sample,part_id
 
 
 
@@ -83,7 +89,9 @@ def pyannote_extract_embs(one_file):
     for segment in long_turns:
         inter = embeddings.crop(segment, 'strict')
         emb_from_sample.append(inter)
-    
+        #emb_from_sample.append(np.mean(inter, axis=0)
+        #emb_from_sample = np.row_stack((emb_from_sample, np.mean(inter, axis=0)))
+    emb_from_sample = np.vstack(emb_from_sample)
     return emb_from_sample
 
 
