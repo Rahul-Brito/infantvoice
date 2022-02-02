@@ -1,12 +1,15 @@
 import os
 import numpy as np
 import pandas as pd
+
 from IPython.display import clear_output
+
 import torch
+
 from pyannote.audio.utils.signal import Binarize, Peak
 from pyannote.core import Segment, notebook, SlidingWindowFeature, timeline, Timeline
 
-
+from skimage.measure import block_reduce
 
 
 def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
@@ -68,7 +71,6 @@ def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
 
 
 def pyannote_extract_embs(emb, one_file):
-    
        
     #using pyannote audio pretrained model tutorial as is: https://github.com/pyannote/pyannote-audio/tree/master/tutorials/pretrained/model
     #Main change from tutorial - don't calculate the means of the embeddings extracted from each 500ms speech turn.
@@ -109,38 +111,56 @@ def pyannote_extract_embs(emb, one_file):
     emb_from_sample = np.vstack(emb_from_sample) #vstack to get the list into numpy format with easy to understand #of embeddings X embedding values structure
     return emb_from_sample
 
+
+
 def load_embs(loc):
     
     #loads embeddings that were already extracted by taking in the location of a .csv file
     all_embs=pd.read_csv(loc, index_col=0)
     return all_embs
 
-def resample_data(X, factor, dropNA = True):
+
+
+def resample_data(all_embs, factor, dropNA = True):
+    
+    #resamples the pandas dataframe containing all embeddings from all participants
+    
+    #all_embs: all embeddings from all participants
+    #factor: factor to resample by. Overlap is dropped
+    #dropNA: flag if drops NaN from embedding data or not. Default is true
+
     if dropNA:
-        X = X.dropna(inplace = False)
+        all_embs = all_embs.dropna(inplace = False)
     
-    #shuffle data within participant
-    X = X.groupby('part').sample(frac=1).reset_index(drop=True)
-    grp = X.groupby('part')
-    Xdown = np.zeros(513)
+    #shuffle the embeddings within each participant (shuffly by row)
+    #moves embeddings from segements a particular speech turn away from each other
+    #pd.groupby: Create an object separated by embeddings of each participant
+    #pd.sample: Return a random sample of items from an axis of object (this shuffles)
+    #### frac: Fraction of axis items to return
+    #pd.reset_index: Reset the index so that the rows are numbered sequentially instead of by their old pre-shuffled index
+    all_embs = all_embs.groupby('part_id').sample(frac=1).reset_index(drop=True)
     
-    #mean every FACTOR datapoints per participant, drop the carryover
-    for name, features in grp:
-            p = features.part
-            if 'sno' in features:
-                features = features.drop('sno', axis=1)
-            if 'part' in features:
-                features = features.drop('part', axis=1)
-            if 'cond' in features:
-                features = features.drop('cond', axis=1)
-            features = features.to_numpy(dtype = 'float32')
-            downsamp = block_reduce(features, block_size=(factor, 1), func=np.mean, cval=np.nan)
+    
+    grp = all_embs.groupby('part_id') #creates an object separated by embeddings of each participant
+    
+    emb_down = np.zeros(513)
+    
+    #find the mean of every <factor> set of embeddings within a participant, drop the carryover
+    #after the shuffle, we are finding the means of shuffles from within a participant but from different segments of the audio
+    for name, embeddings in grp:
+            
+            embeddings = embeddings.drop(columns='part_id')
+            embeddings = embeddings.to_numpy(dtype = 'float32')
+            downsamp = block_reduce(embeddings, block_size=(factor, 1), func=np.mean, cval=np.nan)
             downsamp = np.where(np.isfinite(downsamp), downsamp, pd.NA)
             downsamp = np.concatenate((downsamp, np.full((downsamp.shape[0],1), name)), axis = 1)
-            Xdown = np.vstack((Xdown, downsamp)) 
-    Xdown = pd.DataFrame(Xdown[1:], columns = np.append(np.arange(512)+1, 'part')).dropna()
+            
+            part_id = name*downsamp.shape[0]
+            downsamp = np.hstack((downsamp,part_id))
+            emb_down = np.vstack((Xdown, downsamp)) 
+    emb_down = pd.DataFrame(emb_down[1:], columns = emb_down[end])).dropna()
     
-    return Xdown
+    return emb_down
 
 #def VFPpara_sid_creator(filename):
     
