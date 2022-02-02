@@ -46,16 +46,15 @@ def pyannote_run_directory(directory, save_dir, save_name, save=False):
             part_id.append([filename[0:2]]*emb_from_sample.shape[0])
             all_embs.append(emb_from_sample)
 
-    #all_embs = pd.DataFrame(all_embs.vstac)
-    #all_embs['part'] = [filename[0:2]]*all_embs.shape[0]
-    #all_embs['stim_type'] = stim_type
+    all_embs = pd.DataFrame(np.vstack(all_embs))
+    all_embs['part_id'] = np.hstack(part_id)
     
     print("Done")
     
     if save:
         all_embs.to_csv(os.path.join(save_dir, save_name))
 
-    return all_embs, emb_from_sample,part_id
+    return all_embs
 
 
 
