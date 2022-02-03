@@ -11,6 +11,11 @@ from pyannote.core import Segment, notebook, SlidingWindowFeature, timeline, Tim
 
 from skimage.measure import block_reduce
 
+# speech activity detection model trained on AMI training set
+sad = torch.hub.load('pyannote/pyannote-audio', 'sad_ami')
+# speaker change detection model trained on AMI training set
+scd = torch.hub.load('pyannote/pyannote-audio', 'scd_ami')
+
 
 def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
 
@@ -29,6 +34,8 @@ def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
     
     ### Choose which pre-trained embedding extractor to use
     # speaker embedding models trained on AMI training set
+    
+    save_name = save_name + "_" + emb + ".csv"
     
     if emb == 'emb_ami':
         emb = torch.hub.load('pyannote/pyannote-audio', 'emb_ami')
@@ -143,22 +150,16 @@ def resample_data(all_embs, factor, dropNA = True):
     
     grp = all_embs.groupby('part_id') #creates an object separated by embeddings of each participant
     
-    emb_down = np.zeros(513)
+    emb_down = []
     
     #find the mean of every <factor> set of embeddings within a participant, drop the carryover
     #after the shuffle, we are finding the means of shuffles from within a participant but from different segments of the audio
     for name, embeddings in grp:
             
-            embeddings = embeddings.drop(columns='part_id')
-            embeddings = embeddings.to_numpy(dtype = 'float32')
-            downsamp = block_reduce(embeddings, block_size=(factor, 1), func=np.mean, cval=np.nan)
-            downsamp = np.where(np.isfinite(downsamp), downsamp, pd.NA)
-            downsamp = np.concatenate((downsamp, np.full((downsamp.shape[0],1), name)), axis = 1)
-            
-            part_id = name*downsamp.shape[0]
-            downsamp = np.hstack((downsamp,part_id))
-            emb_down = np.vstack((Xdown, downsamp)) 
-    emb_down = pd.DataFrame(emb_down[1:], columns = emb_down[end])).dropna()
+            downsamp = block_reduce(embeddings.to_numpy(dtype='float32'), block_size=(factor, 1), func=np.mean, cval=np.nan)
+
+            emb_down.append(downsamp)
+    emb_down = pd.DataFrame(np.vstack(emb_down)).dropna()#columns = emb_down[end]
     
     return emb_down
 
