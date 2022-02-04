@@ -14,7 +14,7 @@ def run_tsne(emb_down, perplexity = 30, metric="euclidean"):
     emb_tsne['part_id'] = emb_down['part_id']
     dimreduc = 'tSNE'
 
-    return emb_tsne, dimreduc
+    return emb_tsne
 
 
 
