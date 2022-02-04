@@ -35,7 +35,7 @@ def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
     ### Choose which pre-trained embedding extractor to use
     # speaker embedding models trained on AMI training set
     
-    save_name = save_name + "_" + emb + ".csv"
+    save_name = save_name + '_' + emb + '.csv'
     
     if emb == 'emb_ami':
         emb = torch.hub.load('pyannote/pyannote-audio', 'emb_ami')
@@ -156,11 +156,11 @@ def resample_data(all_embs, factor, dropNA = True):
     #after the shuffle, we are finding the means of shuffles from within a participant but from different segments of the audio
     for name, embeddings in grp:
             
+            #downsamples by "factor". Block_reduce expected np not pd hence the conversion
             downsamp = block_reduce(embeddings.to_numpy(dtype='float32'), block_size=(factor, 1), func=np.mean, cval=np.nan)
 
-            emb_down.append(downsamp)
-    emb_down = pd.DataFrame(np.vstack(emb_down)).dropna()#columns = emb_down[end]
-    
+            emb_down.append(downsamp)#append each participants resampled embeddings
+    emb_down = pd.DataFrame(np.vstack(emb_down), columns=all_embs.columns).dropna().reset_index(drop=True)#remake as pd, drop NA rows(carryover rows), reset index
     return emb_down
 
 #def VFPpara_sid_creator(filename):
