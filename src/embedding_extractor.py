@@ -59,7 +59,7 @@ def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
             
             emb_from_sample = pyannote_extract_embs(emb, one_file)#extract embeddings from one .wav w/ modified pyannote example using the chosen embedding model
             
-            part_id.append([filename[0:2]]*emb_from_sample.shape[0]) #create list of the participant ID that is as long as the number of embeddings from their sample
+            part_id.append([os.path.splitext(filename)[0]]*emb_from_sample.shape[0]) #create list of the participant ID as long as the number of embeddings from sample
             
             all_embs.append(emb_from_sample) #append embeddings from each participant into one long list
 
