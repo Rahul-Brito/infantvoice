@@ -163,6 +163,19 @@ def resample_data(all_embs, factor, dropNA = True):
     emb_down = pd.DataFrame(np.vstack(emb_down), columns=all_embs.columns).dropna().reset_index(drop=True)#remake as pd, drop NA rows(carryover rows), reset index
     return emb_down
 
+
+def embedding_averager(emb):
+
+    #finds the per-participant average embeddings (1x512 features)
+    grp = emb.groupby('part_id')
+
+    emb_a = []
+
+    for name, embeddings in grp:
+        emb_a.append(embeddings.mean(axis=index))
+        
+    return emb_a
+
 #def VFPpara_sid_creator(filename):
     
     #p = filename[filename.index('_')-2:filename.index('_')]
