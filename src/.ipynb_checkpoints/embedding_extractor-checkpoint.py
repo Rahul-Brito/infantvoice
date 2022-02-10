@@ -172,8 +172,9 @@ def embedding_averager(emb):
     emb_a = []
 
     for name, embeddings in grp:
-        emb_a.append(embeddings.mean(axis=index))
-        
+        #find the mean of all embeddings. Axis=0 means mean along the index because i want the mean of all 512 features
+        emb_a.append(embeddings.mean(axis=0))
+    emb_a = pd.DataFrame(emb_a)   
     return emb_a
 
 #def VFPpara_sid_creator(filename):
