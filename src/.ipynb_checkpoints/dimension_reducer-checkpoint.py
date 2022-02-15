@@ -6,9 +6,9 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, StandardScaler
 import umap
 
-def run_tsne(emb_down, perplexity = 30, metric="euclidean"):
+def run_tsne(emb_down, perplexity = 30,init='random',learning_rate=200, metric="euclidean"):
 
-    tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = 'pca', square_distances=True)
+    tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = init, learning_rate=learning_rate, square_distances=True)
 
     emb_tsne = pd.DataFrame(tsne.fit_transform(emb_down.drop(columns='part_id')), columns = ['dim0', 'dim1'])
     emb_tsne['part_id'] = emb_down['part_id']
