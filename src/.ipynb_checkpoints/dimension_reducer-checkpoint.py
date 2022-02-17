@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder, StandardScaler
 import umap
 
-def run_tsne(emb_down,random_state=42 perplexity = 30,init='random',learning_rate=200, metric="euclidean"):
+def run_tsne(emb_down,random_state=42, perplexity = 30,init='random',learning_rate=200, metric="euclidean"):
 
     #run tsne on the data and return a pd with data label. DEFAULT IS ONE RANDOM SEED instead of different random generations
     tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = init, learning_rate=learning_rate, square_distances=True)
