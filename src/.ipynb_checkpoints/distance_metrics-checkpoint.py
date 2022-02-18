@@ -95,7 +95,7 @@ def cos_distance(emb_a):
     return pairwise_distances_cosine
 
 
-def embedding_quality(X, Z, classes, dim_reduc, knn=10, knn_classes=10, subsetsize=1000):
+def embedding_quality(X, Z, classes, knn=10, knn_classes=10, subsetsize=1000):
     #taken directly from https://github.com/berenslab/rna-seq-tsne/blob/master/toy-example.ipynb
     
     nbrs1 = NearestNeighbors(n_neighbors=knn).fit(X)
@@ -132,5 +132,5 @@ def embedding_quality(X, Z, classes, dim_reduc, knn=10, knn_classes=10, subsetsi
     d2 = pdist(Z[subset,:])
     rho = scipy.stats.spearmanr(d1[:,None],d2[:,None]).correlation
     
-    return (mnn, mnn_global, rho, dim_reduc)
+    return (mnn, mnn_global, rho)
         
