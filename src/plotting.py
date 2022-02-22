@@ -1,3 +1,9 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import seaborn as sns
+sns.set_theme(style="white")
+
 def plot_2Ddata(X2d, dimreduc, samptype, colors):
     fig, ax = plt.subplots(1, figsize=(11,9))
     #for x, y, w, t in zip(X2d.dim0, X2d.dim1, X2d.first_sample, X2d.index):
@@ -69,14 +75,15 @@ def plot_norm_heatmap(dist_matrix, samptype):
     mask = np.triu(np.ones_like(dist_matrix, dtype=bool))
 
     # Set up the matplotlib figure
-    f, ax = plt.subplots(figsize=(11, 9))
+    f, ax = plt.subplots(figsize=(15, 15))
     ax.xaxis.set_ticks_position("top")
 
     # Generate a custom diverging colormap
     hmapcol = sns.diverging_palette(230, 20, as_cmap=True)
+    hmapcol.set_under('blue')
 
     # Draw the heatmap with the mask and correct aspect ratio
-    sns.heatmap(dist_matrix, mask=mask, vmin=-1.0, vmax=1.0, cmap=hmapcol, annot=True,
+    sns.heatmap(dist_matrix, mask=mask, vmin=0.05, vmax=1.0, cmap=hmapcol, annot=True,
                 square=True, linewidths=.5, cbar_kws={"shrink": .5})
     plt.title("Distances between centroids of participants, for" + samptype, y = 1.08,fontsize=12)
 

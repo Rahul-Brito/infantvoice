@@ -4,9 +4,11 @@ import pandas as pd
 from IPython.display import clear_output
 
 import scipy
+from scipy.spatial.distance import directed_hausdorff, euclidean, cosine, pdist
+from scipy import stats
 
 from sklearn.neighbors import NearestNeighbors
-from scipy.spatial.distance import directed_hausdorff, euclidean, cosine, pdist
+
 
 def hausdorff_distances(emb_2d):
     # directed or assymetric variant     
@@ -133,4 +135,26 @@ def embedding_quality(X, Z, classes, knn=10, knn_classes=10, subsetsize=1000):
     rho = scipy.stats.spearmanr(d1[:,None],d2[:,None]).correlation
     
     return (mnn, mnn_global, rho)
+
+def loo_t_test(loo_dict,equal_var):
+    #pass in a dictionary <loo_dict> of format {participant-removed:flattened distance}
+    #calculate t-test between all this distribution to test for the null hypothesis that 2 independent distributions of distances have identical average (expected) values.
+    
+    #initialize blank array
+    len_labels=len(loo_dict)
+    labels=list(loo_dict.keys())
+    pairwise_ttest = pd.DataFrame(np.zeros((len_labels, len_labels)), columns=labels, index=labels)
+    
+    for row in range(len_labels):
+        for col in range(len_labels):
+            clear_output(wait=True)
+            label_a = labels[row]
+            label_b = labels[col]
+            label_a_values = loo_dict[label_a]
+            label_b_values = loo_dict[label_b]
+            ttest = stats.ttest_ind(label_a_values,label_b_values,equal_var=equal_var)
+            pairwise_ttest.iloc[row,col]= ttest[1]
+            print("Processing row " + str(row) + ", col " + str(col))
+            
+    return pairwise_ttest
         
