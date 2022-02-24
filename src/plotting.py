@@ -81,6 +81,8 @@ def plot_norm_heatmap(dist_matrix, samptype):
     # Generate a custom diverging colormap
     hmapcol = sns.diverging_palette(230, 20, as_cmap=True)
     hmapcol.set_under('blue')
+    
+    
 
     # Draw the heatmap with the mask and correct aspect ratio
     sns.heatmap(dist_matrix, mask=mask, vmin=0.05, vmax=1.0, cmap=hmapcol, annot=True,
