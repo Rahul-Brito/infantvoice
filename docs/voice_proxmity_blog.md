@@ -19,7 +19,7 @@ For our work, we combined both approaches. Algorithms that are good at diarizati
 - Repeat the leave-one-out analysis. This would show us that we can simplify our voice proximity into a meaningful-low dimension space as well, which can simplify and speed up our analysis while knowing how good we are and what we lost from the high dimension space. Is this tradeoff ok?
 - If this works, look at correlations to known features such as egemaps. How are these features represented in the high dimension space, or the low dimension space, if at all. What known features are driving this quantification of voice proximity. This is new knowledge and can be compared to other findings and hypothesis
 
-##Conclusion
+## Conclusion
 This is what we found! It works
 These are gaps and limitations!
 This is future work!
