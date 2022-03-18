@@ -6,58 +6,46 @@ from IPython.display import clear_output
 
 import torch
 
+from pyannote.audio import Inference
 from pyannote.audio.utils.signal import Binarize, Peak
 from pyannote.core import Segment, notebook, SlidingWindowFeature, timeline, Timeline
 
 from skimage.measure import block_reduce
 
-# speech activity detection model trained on AMI training set
-sad = torch.hub.load('pyannote/pyannote-audio', 'sad_ami')
-# speaker change detection model trained on AMI training set
-scd = torch.hub.load('pyannote/pyannote-audio', 'scd_ami')
+emb = Inference("pyannote/embedding", 
+                      window="sliding",
+                      duration=3.0, step=1.0)
 
-
-def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
+def pyannote_extract_directory(wav_files, diar, save_dir, save_name, save=False):
 
     #extracts embeddings from .wav files in a folder
     #does speaker activity and change detection for long sentences, but just embedding extraction for concatenated hellos
     #using modified version of pyannote audio using tutorial: https://github.com/pyannote/pyannote-audio/tree/master/tutorials/pretrained/model
     
-    #emb: which pre-trained embedding model to use
-    #directory: which directory to look for .wav files
+    #wav_files: which directory to look for .wav files
+    #diar: timelines with diarized data
     #save_dir: which directory to save to if save enabled
     #save_name: name of .csv to save embeddings to
     #save: flag of whether to save embeddings to csv or not. Default is to NOT save and therefore save_dir and save_name can be blank paths
    
-
     print("Started")#to keep track of progress when running multiple participants
     
-    ### Choose which pre-trained embedding extractor to use
-    # speaker embedding models trained on AMI training set
-    
-    save_name = save_name + '_' + emb + '.csv'
-    
-    if emb == 'emb_ami':
-        emb = torch.hub.load('pyannote/pyannote-audio', 'emb_ami')
-    elif emb == 'emb':
-        emb = torch.hub.load('pyannote/pyannote-audio', 'emb')
-    elif emb == 'emb_voxceleb':
-        emb = torch.hub.load('pyannote/pyannote-audio', 'emb_voxceleb')
-        
-    ## finds all .wav files in target directory, will extract embeddings from each
-    
+
+    ## finds all .wav files in target directory, will extract embeddings from each 
     all_embs = [] #init list for all embeddings
     part_id = [] #init list for all participant labels
-    for filename in os.listdir(directory):
+    for filename in os.listdir(wav_files):
         if filename.endswith(".wav"): 
             
             #clears output then prints only current sample being operated on
             clear_output(wait=True)
             print("Processing" + str(filename))
             
-            one_file = {'uri': 'filename', 'audio': os.path.join(directory, filename)}#uri format required for pyannote audtio
+            one_file = os.path.join(wav_files, filename)
             
-            emb_from_sample = pyannote_extract_embs(emb, one_file)#extract embeddings from one .wav w/ modified pyannote example using the chosen embedding model
+            one_diar = diar[int(os.path.splitext(filename)[0])]
+            
+            emb_from_sample = pyannote_extract_embs(one_file, one_diar)#extract embeddings from one .wav, using diarization map to just get intended speaker
             
             part_id.append([os.path.splitext(filename)[0]]*emb_from_sample.shape[0]) #create list of the participant ID as long as the number of embeddings from sample
             
@@ -77,37 +65,23 @@ def pyannote_extract_directory(emb, directory, save_dir, save_name, save=False):
 
 
 
-def pyannote_extract_embs(emb, one_file):
+def pyannote_extract_embs(one_file, one_diar):
        
     #using pyannote audio pretrained model tutorial as is: https://github.com/pyannote/pyannote-audio/tree/master/tutorials/pretrained/model
     #Main change from tutorial - don't calculate the means of the embeddings extracted from each 500ms speech turn.
     
-    #emb: chosen pretrained embedding extractor model
-    #one_file: URI of .wav file in the format the model expects
+    #one_file: .wav file in the format the model expects
+    #diar: diarization map with pyannote timeline to just extract based on intended speaker
     
     emb_from_sample = []
     
     # obtain raw embeddings (as `pyannote.core.SlidingWindowFeature` instance)
     embeddings = emb(one_file)
 
-    # obtain raw SAD scores (as `pyannote.core.SlidingWindowFeature` instance), binarize raw SAD scores
-    # NOTE: both onset/offset values were tuned on AMI dataset. Might need to use different values for better results
-    sad_scores = sad(one_file)
-    binarize = Binarize(offset=0.52, onset=0.52, log_scale=True, min_duration_off=0.1, min_duration_on=0.1)
-    speech = binarize.apply(sad_scores, dimension=1)
-
-    # obtain raw SCD scores (as `pyannote.core.SlidingWindowFeature` instance), detect peaks & return speaker homogeneous segments 
-    # NOTE: both alpha/min_duration values were tuned on AMI dataset. you might need to use different values for better results.
-    scd_scores = scd(one_file)
-    peak = Peak(alpha=0.10, min_duration=0.10, log_scale=True)
-
-    # speech turns are simply the intersection of SAD and SCD
-    partition = peak.apply(scd_scores, dimension=1)
-    speech_turns = partition.crop(speech)
-
-    #We only work of long (> ts) speech turns. Default is 2s from the tutorial
+    #We only work of long (> ts) speech turns. Default is 2s from the tutorial.
+    # DIAR only has speech turns from desired participant
     t = 2
-    long_turns = Timeline(segments=[s for s in speech_turns if s.duration > t])
+    long_turns = Timeline(segments=[s for s in one_diar if s.duration > t])
 
     #for each long turn of >t seconds long, extract each 500ms segment of embeddings 
     for segment in long_turns:
