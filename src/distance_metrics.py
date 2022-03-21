@@ -12,7 +12,7 @@ from sklearn.neighbors import NearestNeighbors
 
 def hausdorff_distances(emb_2d):
     # directed or assymetric variant     
-    labels = emb_2d.part_id.unique()
+    labels = emb_2d.part_id.unique().astype('int32')
     len_labels = len(labels)
     # build empty df
     pairwise_distances_hausdorff = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)
