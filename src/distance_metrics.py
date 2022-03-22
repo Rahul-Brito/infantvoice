@@ -32,14 +32,20 @@ def hausdorff_distances(emb_2d):
             label_a_values = emb_2d[emb_2d.part_id==label_a][['dim0','dim1']].values
             label_b_values = emb_2d[emb_2d.part_id==label_b][['dim0','dim1']].values
             dist_hausdorff = directed_hausdorff(label_a_values,label_b_values)
-            pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
+            if row != col:
+                pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
+            else:
+                pairwise_distances_hausdorff.iloc[row,col]= np.nan
             print("Processing row " + str(row) + ", col " + str(col))
     #         dist_euclidean = euclidean(label_a_values.mean(axis=0),label_b_values.mean(axis=0))
     #         pairwise_distances_euclidean.iloc[row,col]= dist_euclidean
 
     #normalizes cos distances to max distance
-    max_haus = pairwise_distances_hausdorff.to_numpy().max()
-    pairwise_distances_hausdorff = pairwise_distances_hausdorff.divide(max_haus)
+    #max_haus = pairwise_distances_hausdorff.to_numpy().max()
+    #pairwise_distances_hausdorff = pairwise_distances_hausdorff.divide(max_haus)
+    
+    pairwise_distances_hausdorff = pairwise_distances_hausdorff.apply(stats.zscore, nan_policy='omit')
+    
     return pairwise_distances_hausdorff
 
 
