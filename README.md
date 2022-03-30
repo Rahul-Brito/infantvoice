@@ -7,3 +7,5 @@ Still in work.
 Jupyter Lab scripts in /scripts
 
 Modules in /src
+
+To replicate on another dev system, should be able to install from the .yml file
