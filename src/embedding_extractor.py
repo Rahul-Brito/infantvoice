@@ -76,6 +76,7 @@ def pyannote_extract_embs(one_file, one_diar):
     emb_from_sample = []
     
     # obtain raw embeddings (as `pyannote.core.SlidingWindowFeature` instance)
+    #one_file is a .wav
     embeddings = emb(one_file)
 
     #We only work of long (> ts) speech turns. Default is 2s from the tutorial.
