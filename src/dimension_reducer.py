@@ -20,9 +20,9 @@ def run_tsne(emb_down,random_state=42, perplexity = 30,init='random',learning_ra
 
 
 
-def run_umap(emb_down, neighbor = 10, dist=0.1, metric='correlation'):
+def run_umap(emb_down, n_neighbors = 10, dist=0.1, metric='correlation'):
     
-    reducer = umap.UMAP()
+    reducer = umap.UMAP(n_neighbors=n_neighbors)
     X_reduced = reducer.fit_transform(emb_down)
 
     data = pd.DataFrame(X_reduced, columns = ['dim0', 'dim1'])
