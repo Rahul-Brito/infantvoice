@@ -81,11 +81,11 @@ def pyannote_extract_embs(one_file, one_diar):
 
     #We only work of long (> ts) speech turns. Default is 2s from the tutorial.
     # DIAR only has speech turns from desired participant
-    t = 2
-    long_turns = Timeline(segments=[s for s in one_diar if s.duration > t])
+    #t = 2
+    #long_turns = Timeline(segments=[s for s in one_diar if s.duration > t])
 
     #for each long turn of >t seconds long, extract each 500ms segment of embeddings 
-    for segment in long_turns:
+    for segment in one_diar:
         inter = embeddings.crop(segment, 'strict')
         emb_from_sample.append(inter)
         #Tutorial calculated the mean of all the embeddings from a 500ms segment, but we keep them all

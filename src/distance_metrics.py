@@ -29,8 +29,8 @@ def hausdorff_distances(emb_2d):
             clear_output(wait=True)
             label_a = labels[row]
             label_b = labels[col]
-            label_a_values = emb_2d[emb_2d.part_id==label_a][['dim0','dim1']].values
-            label_b_values = emb_2d[emb_2d.part_id==label_b][['dim0','dim1']].values
+            label_a_values = emb_2d[emb_2d.part_id==label_a].drop(columns='part_id').to_numpy()
+            label_b_values = emb_2d[emb_2d.part_id==label_b].drop(columns='part_id').to_numpy()
             dist_hausdorff = directed_hausdorff(label_a_values,label_b_values)
             if row != col:
                 pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
@@ -47,6 +47,39 @@ def hausdorff_distances(emb_2d):
     pairwise_distances_hausdorff = pairwise_distances_hausdorff.apply(stats.zscore, nan_policy='omit')
     
     return pairwise_distances_hausdorff
+
+
+def cos_distance(emb_a):
+    # directed or assymetric variant     
+    labels = emb_a.part_id.unique().astype('int32')
+    len_labels = len(labels)
+    # build empty df
+    pairwise_distances_cosine = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)
+    # pairwise_distances_euclidean = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)                          
+    # Compute pairwise distance between labelled arrays 
+    for row in range(len_labels):
+        for col in range(len_labels):
+            clear_output(wait=True)
+            label_a = labels[row]
+            label_b = labels[col]
+            label_a_values = emb_a[emb_a.part_id==label_a].drop(columns='part_id').to_numpy()
+            label_b_values = emb_a[emb_a.part_id==label_b].drop(columns='part_id').to_numpy()
+            dist_cos = cosine(label_a_values,label_b_values)
+            if label_a != label_b:
+                pairwise_distances_cosine.loc[row,col]= dist_cos
+            else:
+                pairwise_distances_cosine.loc[row,col]= np.nan
+               
+            print("Processing row " + str(row) + ", col " + str(col))
+    
+    #z-score
+    pairwise_distances_cosine = pairwise_distances_cosine.apply(stats.zscore, nan_policy='omit')
+    
+    return pairwise_distances_cosine
+
+
+
+
 
 
 
@@ -76,31 +109,6 @@ def euclidean_distances(X,y, labels):
     return pairwise_distances_euclidean
 
 
-def cos_distance(emb_a):
-    # directed or assymetric variant     
-    labels = emb_a.part_id.unique()
-    len_labels = len(labels)
-    # build empty df
-    pairwise_distances_cosine = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)
-    # pairwise_distances_euclidean = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)                          
-
-    # Compute pairwise distance between labelled arrays 
-    for row in range(len_labels):
-        for col in range(len_labels):
-            clear_output(wait=True)
-            label_a = labels[row]
-            label_b = labels[col]
-            label_a_values = emb_a[emb_a.part_id==label_a].values
-            label_b_values = emb_a[emb_a.part_id==label_b].values
-            dist_cos = cosine(label_a_values,label_b_values)
-            pairwise_distances_cosine.iloc[row,col]= dist_cos
-            print("Processing row " + str(row) + ", col " + str(col))
-    
-    #normalize to largest
-    max_cos = pairwise_distances_cosine.to_numpy().max()
-    pairwise_distances_cosine = pairwise_distances_cosine.divide(max_cos)
-    
-    return pairwise_distances_cosine
 
 
 def embedding_quality(X, Z, classes, knn=10, knn_classes=10, subsetsize=1000):
