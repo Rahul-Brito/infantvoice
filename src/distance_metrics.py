@@ -66,9 +66,9 @@ def cos_distance(emb_a):
             label_b_values = emb_a[emb_a.part_id==label_b].drop(columns='part_id').to_numpy()
             dist_cos = cosine(label_a_values,label_b_values)
             if label_a != label_b:
-                pairwise_distances_cosine.loc[row,col]= dist_cos
+                pairwise_distances_cosine.iloc[row,col]= dist_cos
             else:
-                pairwise_distances_cosine.loc[row,col]= np.nan
+                pairwise_distances_cosine.iloc[row,col]= np.nan
                
             print("Processing row " + str(row) + ", col " + str(col))
     
