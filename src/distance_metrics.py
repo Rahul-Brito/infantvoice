@@ -83,27 +83,32 @@ def cos_distance(emb_a):
 
 
 
-def euclidean_distances(X,y, labels):
+def euclidean_distances(X):
     # directed or assymetric variant     
+    labels = X.part_id.unique().astype('int32')
     len_labels = len(labels)
     # build empty df
     pairwise_distances_euclidean = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)                          
 
     # Build df out of X
-    df = pd.DataFrame(X)
-    df.columns = ['x1', 'x2']
-    df['label'] = y
+    #df = pd.DataFrame(X)
+    #df.columns = ['x1', 'x2']
+    #df['label'] = y
 
+    df = X
     # Compute pairwise distance between labelled arrays 
     for row in range(len_labels):
         for col in range(len_labels):
             clear_output(wait=True)
             label_a = labels[row]
             label_b = labels[col]
-            label_a_values = df[df.label==label_a][['x1','x2']].values
-            label_b_values = df[df.label==label_b][['x1','x2']].values
+            label_a_values = df[df.part_id==label_a].drop(columns='part_id').to_numpy()
+            label_b_values = df[df.part_id==label_b].drop(columns='part_id').to_numpy()
             dist_euclidean = euclidean(label_a_values.mean(axis=0),label_b_values.mean(axis=0))
-            pairwise_distances_euclidean.iloc[row,col]= dist_euclidean
+            if label_a != label_b:
+                pairwise_distances_euclidean.iloc[row,col]= dist_euclidean
+            else:
+                pairwise_distances_euclidean.iloc[row,col]= np.nan
 
 
     return pairwise_distances_euclidean
