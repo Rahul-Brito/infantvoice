@@ -20,9 +20,9 @@ def run_tsne(emb_down,random_state=42, perplexity = 30,init='random',learning_ra
 
 
 
-def run_umap(emb_down, n_components=2, n_neighbors = 10, dist=0.1, metric='correlation'):
+def run_umap(emb_down, n_components=2, n_neighbors = 10, min_dist=0.1, metric='cosine'):
     
-    reducer = umap.UMAP(n_components=n_components, n_neighbors=n_neighbors)
+    reducer = umap.UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist)
     X_reduced = reducer.fit_transform(emb_down)
 
     col_lab = ['dim' + str(d) for d in np.arange(n_components)]
