@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-
+from scipy.spatial.distance import directed_hausdorff, euclidean, cosine, pdist
 from IPython.display import clear_output
 
 import scipy
-from scipy.spatial.distance import directed_hausdorff, euclidean, cosine, pdist
+
 from scipy import stats
 
 from sklearn.neighbors import NearestNeighbors
