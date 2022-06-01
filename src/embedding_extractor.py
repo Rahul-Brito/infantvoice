@@ -43,7 +43,7 @@ def pyannote_extract_directory(wav_files, diar, save_dir, save_name, save=False)
             
             one_file = os.path.join(wav_files, filename)
             
-            one_diar = diar[int(os.path.splitext(filename)[0])]
+            one_diar = diar[str(os.path.splitext(filename)[0])]
             
             emb_from_sample = pyannote_extract_embs(one_file, one_diar)#extract embeddings from one .wav, using diarization map to just get intended speaker
             

@@ -33,9 +33,10 @@ def resample_data(all_embs, factor, dropNA = True):
     for name, embeddings in grp:
             
             #downsamples by "factor". Block_reduce expected np not pd hence the conversion
-            downsamp = block_reduce(embeddings.to_numpy(dtype='float32'), block_size=(factor, 1), func=np.mean, cval=np.nan)
+            downsamp = block_reduce(embeddings.drop(columns='part_id').to_numpy(dtype='float32'), block_size=(factor, 1), func=np.mean, cval=np.nan)
 
             emb_down.append(downsamp)#append each participants resampled embeddings
+            emb_down['part_id'] = embeddings.part_id.reset_index()
     emb_down = pd.DataFrame(np.vstack(emb_down), columns=all_embs.columns).dropna().reset_index(drop=True)#remake as pd, drop NA rows(carryover rows), reset index
     return emb_down
 
