@@ -10,7 +10,7 @@ import pacmap
 def run_tsne(emb_down,random_state=42, perplexity = 30,init='pca',learning_rate=200, metric='cosine'):
 
     #run tsne on the data and return a pd with data label. DEFAULT IS ONE RANDOM SEED instead of different random generations
-    tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = init, learning_rate=learning_rate, square_distances=True)
+    tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = init, learning_rate=learning_rate, random_state=random_state, square_distances=True)
 
     emb_tsne = pd.DataFrame(tsne.fit_transform(emb_down.drop(columns='part_id')), columns = ['dim0', 'dim1'])
     emb_tsne['part_id'] = emb_down['part_id'].to_numpy()
