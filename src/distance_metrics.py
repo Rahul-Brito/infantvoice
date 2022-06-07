@@ -14,14 +14,9 @@ def hausdorff_distances(emb_2d):
     # directed or assymetric variant     
     labels = emb_2d.part_id.unique()
     len_labels = len(labels)
+    
     # build empty df
     pairwise_distances_hausdorff = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)
-    # pairwise_distances_euclidean = pd.DataFrame(np.zeros((len_labels, len_labels)) , columns = labels, index=labels)                          
-
-    # Build df out of X
-    #df = pd.DataFrame(X)
-    #df.columns = ['x1', 'x2']
-    #df['label'] = y
 
     # Compute pairwise distance between labelled arrays 
     for row in range(len_labels):
@@ -29,24 +24,24 @@ def hausdorff_distances(emb_2d):
             clear_output(wait=True)
             label_a = labels[row]
             label_b = labels[col]
+
             label_a_values = emb_2d[emb_2d.part_id==label_a].drop(columns='part_id').to_numpy()
             label_b_values = emb_2d[emb_2d.part_id==label_b].drop(columns='part_id').to_numpy()
+            
             dist_hausdorff = directed_hausdorff(label_a_values,label_b_values)
+
             if row != col:
                 pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
             else:
                 pairwise_distances_hausdorff.iloc[row,col]= np.nan
             print("Processing row " + str(row) + ", col " + str(col))
-    #         dist_euclidean = euclidean(label_a_values.mean(axis=0),label_b_values.mean(axis=0))
-    #         pairwise_distances_euclidean.iloc[row,col]= dist_euclidean
 
-    #normalizes cos distances to max distance
-    #max_haus = pairwise_distances_hausdorff.to_numpy().max()
-    #pairwise_distances_hausdorff = pairwise_distances_hausdorff.divide(max_haus)
-    
-    pairwise_distances_hausdorff = pairwise_distances_hausdorff.apply(stats.zscore, nan_policy='omit')
-    
-    return pairwise_distances_hausdorff
+    pairwise_distances_hausdorff_zscore = pd.DataFrame(
+        stats.zscore(pairwise_distances_hausdorff.to_numpy(), 
+                     axis=None, ddof=0, nan_policy='omit'),
+        columns = labels, index=labels)
+
+    return pairwise_distances_hausdorff_zscore
 
 
 def cos_distance(emb_a):
