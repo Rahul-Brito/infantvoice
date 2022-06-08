@@ -36,12 +36,12 @@ def hausdorff_distances(emb_2d):
                 pairwise_distances_hausdorff.iloc[row,col]= np.nan
             print("Processing row " + str(row) + ", col " + str(col))
 
-    pairwise_distances_hausdorff_zscore = pd.DataFrame(
-        stats.zscore(pairwise_distances_hausdorff.to_numpy(), 
-                     axis=None, ddof=0, nan_policy='omit'),
-        columns = labels, index=labels)
+    #pairwise_distances_hausdorff_zscore = pd.DataFrame(
+    #    stats.zscore(pairwise_distances_hausdorff.to_numpy(), 
+    #                 axis=None, ddof=0, nan_policy='omit'),
+    #    columns = labels, index=labels)
 
-    return pairwise_distances_hausdorff_zscore
+    return pairwise_distances_hausdorff #pairwise_distances_hausdorff_zscore
 
 
 def cos_distance(emb_a):
