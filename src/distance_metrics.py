@@ -29,18 +29,23 @@ def hausdorff_distances(emb_2d):
             label_b_values = emb_2d[emb_2d.part_id==label_b].drop(columns='part_id').to_numpy()
             
             dist_hausdorff = directed_hausdorff(label_a_values,label_b_values)
+            pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
 
-            if row != col:
-                pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
-            else:
-                pairwise_distances_hausdorff.iloc[row,col]= np.nan
+            #if row != col:
+            #    pairwise_distances_hausdorff.iloc[row,col]= dist_hausdorff[0]
+            #else:
+            #    pairwise_distances_hausdorff.iloc[row,col]= np.nan
             print("Processing row " + str(row) + ", col " + str(col))
 
     #pairwise_distances_hausdorff_zscore = pd.DataFrame(
     #    stats.zscore(pairwise_distances_hausdorff.to_numpy(), 
     #                 axis=None, ddof=0, nan_policy='omit'),
     #    columns = labels, index=labels)
-
+    
+    #sort by ascending index and column
+    pairwise_distances_hausdorff.sort_index(inplace=True)
+    pairwise_distances_hausdorff.sort_index(axis=1, inplace=True)
+    
     return pairwise_distances_hausdorff #pairwise_distances_hausdorff_zscore
 
 
