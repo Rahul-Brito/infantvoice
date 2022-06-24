@@ -43,8 +43,7 @@ def pyannote_extract_directory(wav_files, diar, save_dir, save_name, window_type
             if diar == None:
                 one_diar = None
             else:
-                one_diar = diar[str(os.path.splitext(filename)[0])]
-            
+                one_diar = diar[str(Path(filename).stem)]
             emb_from_sample = pyannote_extract_embs(one_file, one_diar, window_type)#extract embeddings from one .wav, using diarization map to just get intended speaker
             part_id.append([Path(filename).stem]*emb_from_sample.shape[0]) #create list of the participant ID as long as the number of embeddings from sample
             
@@ -91,9 +90,9 @@ def pyannote_extract_embs(one_file, one_diar, window_type):
     #long_turns = Timeline(segments=[s for s in one_diar if s.duration > t])
 
     #for each long turn of >t seconds long, extract each 500ms segment of embeddings 
-    if one_diar==None:
+    if window_type == "whole":
         emb_from_sample.append(embeddings)
-    else:
+    elif window_type == "sliding":
         for segment in one_diar:
             inter = embeddings.crop(segment, 'strict')
             emb_from_sample.append(inter)
