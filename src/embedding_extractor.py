@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from IPython.display import clear_output
 
@@ -12,11 +13,7 @@ from pyannote.core import Segment, notebook, SlidingWindowFeature, timeline, Tim
 
 from skimage.measure import block_reduce
 
-emb = Inference("pyannote/embedding", 
-                      window="sliding",
-                      duration=3.0, step=1.0)
-
-def pyannote_extract_directory(wav_files, diar, save_dir, save_name, save=False):
+def pyannote_extract_directory(wav_files, diar, save_dir, save_name, window_type, save=False):
 
     #extracts embeddings from .wav files in a folder
     #does speaker activity and change detection for long sentences, but just embedding extraction for concatenated hellos
@@ -34,20 +31,21 @@ def pyannote_extract_directory(wav_files, diar, save_dir, save_name, save=False)
     ## finds all .wav files in target directory, will extract embeddings from each 
     all_embs = [] #init list for all embeddings
     part_id = [] #init list for all participant labels
-    for filename in os.listdir(wav_files):
+    for filename in wav_files:
         if filename.endswith(".wav"): 
             
             #clears output then prints only current sample being operated on
             clear_output(wait=True)
             print("Processing" + str(filename))
             
-            one_file = os.path.join(wav_files, filename)
+            one_file = filename
             
-            one_diar = diar[int(os.path.splitext(filename)[0])]
-            
-            emb_from_sample = pyannote_extract_embs(one_file, one_diar)#extract embeddings from one .wav, using diarization map to just get intended speaker
-            
-            part_id.append([os.path.splitext(filename)[0]]*emb_from_sample.shape[0]) #create list of the participant ID as long as the number of embeddings from sample
+            if diar == None:
+                one_diar = None
+            else:
+                one_diar = diar[str(Path(filename).stem)]
+            emb_from_sample = pyannote_extract_embs(one_file, one_diar, window_type)#extract embeddings from one .wav, using diarization map to just get intended speaker
+            part_id.append([Path(filename).stem]*emb_from_sample.shape[0]) #create list of the participant ID as long as the number of embeddings from sample
             
             all_embs.append(emb_from_sample) #append embeddings from each participant into one long list
 
@@ -65,8 +63,15 @@ def pyannote_extract_directory(wav_files, diar, save_dir, save_name, save=False)
 
 
 
-def pyannote_extract_embs(one_file, one_diar):
+def pyannote_extract_embs(one_file, one_diar, window_type):
        
+    if window_type == "sliding":
+        emb = Inference("pyannote/embedding", 
+                          window="sliding",
+                          duration=3.0, step=1.0)
+    elif window_type == "whole":
+        emb = Inference("pyannote/embedding", window="whole")
+    
     #using pyannote audio pretrained model tutorial as is: https://github.com/pyannote/pyannote-audio/tree/master/tutorials/pretrained/model
     #Main change from tutorial - don't calculate the means of the embeddings extracted from each 500ms speech turn.
     
@@ -85,11 +90,14 @@ def pyannote_extract_embs(one_file, one_diar):
     #long_turns = Timeline(segments=[s for s in one_diar if s.duration > t])
 
     #for each long turn of >t seconds long, extract each 500ms segment of embeddings 
-    for segment in one_diar:
-        inter = embeddings.crop(segment, 'strict')
-        emb_from_sample.append(inter)
-        #Tutorial calculated the mean of all the embeddings from a 500ms segment, but we keep them all
-        #emb_from_sample.append(np.mean(inter, axis=0)
+    if window_type == "whole":
+        emb_from_sample.append(embeddings)
+    elif window_type == "sliding":
+        for segment in one_diar:
+            inter = embeddings.crop(segment, 'strict')
+            emb_from_sample.append(inter)
+            #Tutorial calculated the mean of all the embeddings from a 500ms segment, but we keep them all
+            #emb_from_sample.append(np.mean(inter, axis=0)
     emb_from_sample = np.vstack(emb_from_sample) #vstack to get the list into numpy format with easy to understand #of embeddings X embedding values structure
     return emb_from_sample
 

@@ -7,10 +7,10 @@ from sklearn.preprocessing import MinMaxScaler, LabelEncoder, StandardScaler
 import umap
 import pacmap
 
-def run_tsne(emb_down,random_state=42, perplexity = 30,init='random',learning_rate=200, metric="euclidean"):
+def run_tsne(emb_down,random_state=42, perplexity = 30,init='pca',learning_rate=200, metric='cosine'):
 
     #run tsne on the data and return a pd with data label. DEFAULT IS ONE RANDOM SEED instead of different random generations
-    tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = init, learning_rate=learning_rate, square_distances=True)
+    tsne = TSNE(n_components=2, perplexity=perplexity, metric=metric, init = init, learning_rate=learning_rate, random_state=random_state, square_distances=True)
 
     emb_tsne = pd.DataFrame(tsne.fit_transform(emb_down.drop(columns='part_id')), columns = ['dim0', 'dim1'])
     emb_tsne['part_id'] = emb_down['part_id'].to_numpy()
@@ -22,8 +22,8 @@ def run_tsne(emb_down,random_state=42, perplexity = 30,init='random',learning_ra
 
 def run_umap(emb_down, n_components=2, n_neighbors = 10, min_dist=0.1, metric='cosine'):
     
-    reducer = umap.UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist)
-    X_reduced = reducer.fit_transform(emb_down)
+    reducer = umap.UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, metric=metric)
+    X_reduced = reducer.fit_transform(emb_down.drop(columns='part_id'))
 
     col_lab = ['dim' + str(d) for d in np.arange(n_components)]
     data = pd.DataFrame(X_reduced, columns = col_lab)
