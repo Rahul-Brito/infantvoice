@@ -68,7 +68,8 @@ def pyannote_extract_embs(one_file, one_diar, window_type):
     if window_type == "sliding":
         emb = Inference("pyannote/embedding", 
                           window="sliding",
-                          duration=3.0, step=1.0)
+                          duration=3.0, step=1.0,
+                       use_auth_token='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')
     elif window_type == "whole":
         emb = Inference("pyannote/embedding", window="whole")
     
